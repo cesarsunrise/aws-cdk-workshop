@@ -73,10 +73,10 @@ jobs:
 
       - name: Deploy stack
         uses: allenevans/set-env@v2.0.0
-          with:
-            CDK_DEFAULT_ACCOUNT: ${{ secrets.CDK_DEFAULT_ACCOUNT }}
-            CDK_DEFAULT_REGION: ${{ secrets.CDK_DEFAULT_REGION }}
-            ENV_DEPLOY: ${{ secrets.ENV_DEPLOY }}
-            ENV_NAME: ${{ secrets.ENV_NAME }}
-            ENV_OPTION: ${{ secrets.ENV_OPTION }}
+        with:
+          CDK_DEFAULT_ACCOUNT: ${{ secrets.CDK_DEFAULT_ACCOUNT }}
+          CDK_DEFAULT_REGION: ${{ secrets.CDK_DEFAULT_REGION }}
+          ENV_DEPLOY: ${{ secrets.ENV_DEPLOY }}
+          ENV_NAME: ${{ secrets.ENV_NAME }}
+          ENV_OPTION: ${{ secrets.ENV_OPTION }}
         run: npm run cdk deploy --all --require-approval never
