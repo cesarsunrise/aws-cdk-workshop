@@ -1,13 +1,12 @@
-name: CI-CD For Dev
+name: CI-CD For Production
 
 on:
   push:
     branches:
-      - development
-      - feature/*
+      - main
   pull_request:
     branches:
-      - development
+      - main
 
 jobs:
   less_than_24_hours:
@@ -46,11 +45,11 @@ jobs:
           npm i
           npm run test
   deployment:
-    name: Deployment
+    name: Production
     runs-on: ubuntu-latest
-    environment: dev
+    environment: prod
     needs: [unit-test]
-    if: github.ref == 'refs/heads/development'
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
