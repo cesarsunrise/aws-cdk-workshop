@@ -1,0 +1,84 @@
+name: CI-CD For Dev
+
+on:
+  push:
+    branches:
+      - development
+      - feature/*
+  pull_request:
+    branches:
+      - development
+
+jobs:
+  less_than_24_hours:
+    name: Branch less than 24 hours
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          sudo apt update
+          sudo apt install git
+          current_head=$(git rev-parse HEAD)
+          last_merge=$(git rev-list --min-parents=2 --max-count=1 HEAD)
+          first_commit=$(git log --pretty=format:"%h" $last_merge..$current_head |  tail -n 1)
+          branch_date=$(git show -s --format=%cd --date=unix $first_commit)
+          current_time=$(date +%s)
+          time_difference=$(( $current_time - $branch_date ))
+          twenty_four_hours=$((60*60*24))
+          if [ $time_difference -gt $twenty_four_hours ];then
+              echo "Branch is older than 24 hours";
+              exit 1
+              else
+              exit 0
+              fi
+            fi
+  unit-test:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16.3.0"
+          cache: "npm"
+      - name: tests
+        run: |
+          npm i
+          npm run test
+  deployment:
+    name: Deployment
+    runs-on: ubuntu-latest
+    environment: dev
+    needs: [unit-test]
+    if: github.ref == 'refs/heads/development'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16.3.0"
+          cache: "npm"
+
+      # - name: Install dependencies
+      #   run: npm i
+
+      - name: Configure aws credentials
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.CDK_DEFAULT_REGION }}
+
+      - name: Set enviroments variables
+        uses: allenevans/set-env@v2.0.0
+        with:
+          CDK_DEFAULT_ACCOUNT: ${{ secrets.CDK_DEFAULT_ACCOUNT }}
+          CDK_DEFAULT_REGION: ${{ secrets.CDK_DEFAULT_REGION }}
+          ENV_DEPLOY: ${{ secrets.ENV_DEPLOY }}
+          ENV_NAME: ${{ secrets.ENV_NAME }}
+          ENV_OPTION: ${{ secrets.ENV_OPTION }}
+
+      - name: Deploy stack
+        run: make install-and-deploy
